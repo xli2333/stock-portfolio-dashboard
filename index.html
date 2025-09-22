@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能股票投资组合展示系统</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1><i class="fas fa-chart-line"></i> 股票投资组合分析</h1>
+            <div class="header-info">
+                <span class="update-time">最后更新: <span id="lastUpdate">--</span></span>
+                <button class="refresh-btn" onclick="loadData()">
+                    <i class="fas fa-sync-alt"></i> 刷新数据
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- 投资组合概览 -->
+            <section class="overview-section">
+                <h2>投资组合概览</h2>
+                <div class="overview-cards">
+                    <div class="card">
+                        <div class="card-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="card-content">
+                            <div class="card-title">总资产</div>
+                            <div class="card-value" id="totalAssets">¥0</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon"><i class="fas fa-percentage"></i></div>
+                        <div class="card-content">
+                            <div class="card-title">总收益率</div>
+                            <div class="card-value" id="totalReturn">0%</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon"><i class="fas fa-chart-area"></i></div>
+                        <div class="card-content">
+                            <div class="card-title">仓位占用</div>
+                            <div class="card-value" id="positionUsage">0%</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon"><i class="fas fa-coins"></i></div>
+                        <div class="card-content">
+                            <div class="card-title">当日盈亏</div>
+                            <div class="card-value" id="dailyPnL">¥0</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 持仓详情表格 -->
+            <section class="holdings-section">
+                <h2>持仓详情</h2>
+                <div class="table-container">
+                    <table class="holdings-table" id="holdingsTable">
+                        <thead>
+                            <tr>
+                                <th>股票代码</th>
+                                <th>公司名称</th>
+                                <th>简介</th>
+                                <th>持仓数量</th>
+                                <th>成本价</th>
+                                <th>收盘价</th>
+                                <th>持仓市值</th>
+                                <th>持仓占比</th>
+                                <th>单日盈亏</th>
+                                <th>总盈亏</th>
+                            </tr>
+                        </thead>
+                        <tbody id="holdingsBody">
+                            <!-- 数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 可视化图表区域 -->
+            <section class="charts-section">
+                <div class="charts-container">
+                    <!-- 持仓分布饼图 -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-pie"></i> 持仓分布</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-chart="position">占比</button>
+                                <button class="chart-btn" data-chart="value">市值</button>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="positionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 收益表现柱状图 -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-bar"></i> 收益表现</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-chart="daily">当日</button>
+                                <button class="chart-btn" data-chart="total">总计</button>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- 股票热力图 -->
+            <section class="heatmap-section">
+                <h2><i class="fas fa-th"></i> 股票表现热力图</h2>
+                <div class="heatmap-container">
+                    <div id="stockHeatmap" class="stock-heatmap">
+                        <!-- 热力图将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 股票投资组合分析系统. 数据更新时间: <span id="dataDate">--</span></p>
+        </div>
+    </footer>
+
+    <!-- Loading 覆盖层 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>正在加载数据...</p>
+        </div>
+    </div>
+
+    <!-- 引入JavaScript文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // 等待Chart.js加载完成
+        function waitForChart() {
+            return new Promise((resolve) => {
+                if (typeof Chart !== 'undefined') {
+                    resolve();
+                } else {
+                    setTimeout(() => waitForChart().then(resolve), 100);
+                }
+            });
+        }
+    </script>
+    <script src="js/utils.js"></script>
+    <script src="js/fileDetector.js"></script>
+    <script src="js/dataProcessor.js"></script>
+    <script src="js/chartRenderer.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
