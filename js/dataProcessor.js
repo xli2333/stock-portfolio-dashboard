@@ -3,7 +3,7 @@
 class DataProcessor {
     constructor() {
         this.data = null;
-        this.csvPath = 'data/current/stockperformance-9.19.csv';
+        this.csvPath = 'data/current/stockperformance-9.20.csv';
         this.currentFilePath = null;
     }
 
@@ -16,7 +16,9 @@ class DataProcessor {
             if (!path) {
                 try {
                     path = await fileDetector.detectLatestCSV();
-                    console.log('自动检测到文件:', path);
+                    console.log('智能检测到最新文件:', path);
+                    // 更新当前默认路径为检测到的最新文件
+                    this.csvPath = path;
                 } catch (error) {
                     console.warn('自动检测失败，使用默认路径:', error.message);
                     path = this.csvPath;
